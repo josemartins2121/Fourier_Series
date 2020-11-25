@@ -21,7 +21,9 @@ with open('teste.svg','r') as f:
 start = code.find('<path d="') + 9
 end = code.find('"', start)
 code = code[start:end].replace(" ",'')
-   
+code = code.replace("z","Z")
+
+
 letters=[]
 for i in code:
     if i.isalpha():
@@ -31,14 +33,13 @@ for i in code:
 code = replace_char(code,letters)
 code.remove("")
 
-
 code = [[instruction[0],instruction.replace(instruction[0],'')]for instruction in code]
 print(code)
 
 
 
 class instruction:  
-    def __init__(self, type,endpoint,startpoint=[],controlpoints=[]):  
+    def __init__(self, type,endpoint=[],startpoint=[],controlpoints=[]):  
         self.type = type 
         self.startpoint = startpoint 
         self.controlpoints = controlpoints 
@@ -58,46 +59,41 @@ def parser(code):
     start_command = code.pop(0)
 
     #coordenadas do início do desenho 
-    startpoint_path = np.array(start_command[1].split(",")).astype(np.float)
+    startpoint_path = [float(x) for x in start_command[1].split(",")]
 
 
-    startpoint = startpoint_path
+    startpoint_new = startpoint_path
     for i,command in enumerate(code):
 
-        switch(command[0])
+        new_type = command[0]
+        new_type_upper = new_type.upper()
 
+        if new_type_upper == 'V':
+            new_instruction = instruction(type = new_type)
+            new_instruction.startpoint = startpoint_new
+            print(new_instruction.startpoint)
+            Y = float(command[1])
 
-
-
-
-        if command[0] != 'z':
-            points = np.array(command[1].split(",")).astype(np.float)
-        else: 
-            points = startpoint_path
-        
-        path.append(instruction(type=command[0],startpoint=startpoint,endpoint = points))
-        
-        startpoint = points
-        print(i+1)
-        path[i].print()
-
-    #print(path[0].type)
-    #print(path[0].endpoint)
-
+            #linha vertical mantém-se o x
+            aux_endpoints = []
+            if new_type.islower():
+                y_end = new_instruction.startpoint[1]+Y
+            else:
+                y_end = Y
+            aux_endpoints.append(new_instruction.startpoint[0])
+            aux_endpoints.append(y_end)
+            new_instruction.endpoint = aux_endpoints
+            path.append(new_instruction)
+        startpoint_new = aux_endpoints
 
 
     return path
 
 def main(code):
     path = parser(code)
+    for instruction in path:
+        instruction.print()
     
-
-
-
-
-
-
-
 
 
 
