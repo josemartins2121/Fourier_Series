@@ -39,7 +39,7 @@ print(code)
 
 
 class instruction:  
-    def __init__(self, type,endpoint=[],startpoint=[],controlpoints=[]):  
+    def __init__(self, type,endpoint,startpoint,controlpoints=[]):  
         self.type = type 
         self.startpoint = startpoint 
         self.controlpoints = controlpoints 
@@ -60,7 +60,7 @@ def parser(code):
 
     #coordenadas do início do desenho 
     startpoint_path = [float(x) for x in start_command[1].split(",")]
-
+    startpoint_path = complex(startpoint_path[0],startpoint_path[1])
 
     startpoint_new = startpoint_path
     for i,command in enumerate(code):
@@ -69,21 +69,36 @@ def parser(code):
         new_type_upper = new_type.upper()
 
         if new_type_upper == 'V':
-            new_instruction = instruction(type = new_type)
-            new_instruction.startpoint = startpoint_new
-            print(new_instruction.startpoint)
+
             Y = float(command[1])
 
-            #linha vertical mantém-se o x
-            aux_endpoints = []
+            #linha vertical mantém-se o x   
             if new_type.islower():
-                y_end = new_instruction.startpoint[1]+Y
+                y_end = startpoint_new.imag+Y
             else:
                 y_end = Y
-            aux_endpoints.append(new_instruction.startpoint[0])
-            aux_endpoints.append(y_end)
-            new_instruction.endpoint = aux_endpoints
-            path.append(new_instruction)
+            aux_endpoints = complex(startpoint_new.real,y_end)
+
+
+            new_instruction = instruction(type = new_type,startpoint=startpoint_new,endpoint=aux_endpoints)
+        
+
+        if new_type_upper == 'Z':
+            new_instruction = instruction(type = new_type,startpoint=startpoint_new,endpoint=startpoint_path)
+            aux_endpoints = startpoint_path
+            
+
+        if new_type_upper == 'L':
+
+            aux_endpoints = [float(x) for x in command[1].split(",")]
+            aux_endpoints = complex(aux_endpoints[0],aux_endpoints[1])
+
+            new_instruction = instruction(type = new_type,startpoint=startpoint_new,endpoint=aux_endpoints)
+            new_instruction.endpoint=aux_endpoints
+        
+        path.append(new_instruction)
+        new_instruction.print()
+        #print(aux_endpoints)
         startpoint_new = aux_endpoints
 
 
@@ -91,27 +106,23 @@ def parser(code):
 
 def main(code):
     path = parser(code)
+    list_points = []
     for instruction in path:
-        instruction.print()
-    
+        #instruction.print()
+        if instruction.startpoint not in list_points:
+            list_points.append(instruction.startpoint)
+        if instruction.endpoint not in list_points:
+            list_points.append(instruction.endpoint)         
+    print_points(list_points)
 
 
 
-
-
-
-
-def print_points(path):
+def print_points(list_points):
     X = []
     Y = []
-    for instruction in path:
-        if instruction[1] != '' and instruction[0] != 'V' and instruction[0] != 'v':
-            print(instruction)
-            x,y = instruction[1].split(",")
-            x = float(x)
-            y = float(y)
-            X.append(x)
-            Y.append(y*1j)
+    for point in list_points:
+            X.append(point.real)
+            Y.append(point.imag)
     plt.scatter(X,Y, color='red')
     plt.show()
 
