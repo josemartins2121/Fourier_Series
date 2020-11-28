@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 import matplotlib.pyplot as plt
 import numpy as np
+import math
 
 def replace_char(path,letters):
     result = []
@@ -82,6 +83,9 @@ class instruction:
         endpoint = self.endpoint,
         controlpoint= self.controlpoints))
 
+    def function_t(self,t):
+        return self.startpoint*(1-t)+t*self.endpoint
+
 
 def parser(code):
     path = []
@@ -108,15 +112,24 @@ def parser(code):
             else:
                 y_end = Y
             aux_endpoints = complex(startpoint_new.real,y_end)
+            new_instruction = instruction(type = new_type,startpoint=startpoint_new,endpoint=aux_endpoints)
+
 
         if new_type_upper == 'Z':
             aux_endpoints = startpoint_path
+            new_instruction = instruction(type = new_type,startpoint=startpoint_new,endpoint=aux_endpoints)
             
 
         if new_type_upper == 'L':
             aux_endpoints = complex(command[1][0],command[1][1])
+            new_instruction = instruction(type = new_type,startpoint=startpoint_new,endpoint=aux_endpoints)
+
         
-        new_instruction = instruction(type = new_type,startpoint=startpoint_new,endpoint=aux_endpoints)
+        
+        if new_type_upper == 'M':
+            aux_endpoints = complex(command[1][0],command[1][1])
+
+
         path.append(new_instruction)
         new_instruction.print()
         startpoint_new = aux_endpoints
@@ -126,6 +139,7 @@ def parser(code):
 
 def main(code):
     path = parser(code)
+    path.pop(8)
     list_points = []
     for instruction in path:
         
@@ -134,9 +148,44 @@ def main(code):
             list_points.append(instruction.startpoint)
         if instruction.endpoint not in list_points:
             list_points.append(instruction.endpoint)         
-    print_points(list_points)
+    #print_points(list_points)
+    print_points_f(path)
 
 
+def image_func(t):
+    interval = 2*math.pi/len(path)
+    return path[int(t/interval)].function_t((t%interval)/interval)
+
+
+
+def print_points_f(path):
+
+    #interval t [0,2pi]
+    interval = 2*math.pi/len(path)
+
+    X = []
+    Y = []
+
+    for t in np.arange(0,2*math.pi,0.001):
+        value = path[int(t/interval)].function_t((t%interval)/interval)
+        X.append(value.real)
+        Y.append(value.imag)
+
+    plt.scatter(X,Y, color='blue',s=2)
+    plt.show()
+       
+"""  for t in np.arange(0,2*math.pi,0.5):
+        value = path[int(t/interval)].function_t((t%interval)/interval)
+        X.append(value.real)
+        Y.append(value.imag) """
+""" for i in range(len(path)):
+        for t in np.arange(0,1,0.001):
+            print(t)
+            value = path[i].function_t(t)
+            X.append(value.real)
+            Y.append(value.imag)
+    plt.scatter(X,Y, color='blue',s=2)
+    plt.show() """
 
 def print_points(list_points):
     X = []
@@ -149,6 +198,5 @@ def print_points(list_points):
 
 main(code)
 #print_points(code) 
-
 
     
