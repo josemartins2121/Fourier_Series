@@ -18,9 +18,19 @@ def replace_char(path,letters):
 with open('teste.svg','r') as f:
     code = f.read()
 
+    
+start = code.find('viewBox="') + 9
+end = code.find('"', start)
+aux_coordinates = code[start:end].split(" ")
+width = aux_coordinates[2]
+height = aux_coordinates[3]
+
+#find path 
 start = code.find('<path d="') + 9
 end = code.find('"', start)
 code = code[start:end].replace(" ",'')
+
+# z e Z têm o mesmo significado 
 code = code.replace("z","Z")
 
 
@@ -29,11 +39,32 @@ for i in code:
     if i.isalpha():
         if i not in letters:
             letters.append(i)
-            
 code = replace_char(code,letters)
 code.remove("")
 
 code = [[instruction[0],instruction.replace(instruction[0],'')]for instruction in code]
+
+
+scaling_factor = 1
+
+#transcrição de string para float 
+for instruction in code:
+    try :
+        instruction[1]= [float(x) for x in instruction[1].split(",")]
+        if instruction[0].isupper():
+            for i,coordinates in enumerate(instruction[1]):
+                instruction[1][i] = coordinates-25
+    except:
+        pass
+
+""" for instruction in code:
+    if instruction[0].upper() == 'V':
+        code.pop(code.index(instruction)) """
+#alterar centro de massa da imagem 
+
+
+
+
 print(code)
 
 
@@ -59,8 +90,7 @@ def parser(code):
     start_command = code.pop(0)
 
     #coordenadas do início do desenho 
-    startpoint_path = [float(x) for x in start_command[1].split(",")]
-    startpoint_path = complex(startpoint_path[0],startpoint_path[1])
+    startpoint_path = complex(start_command[1][0],start_command[1][1])
 
     startpoint_new = startpoint_path
     for i,command in enumerate(code):
@@ -70,7 +100,7 @@ def parser(code):
 
         if new_type_upper == 'V':
 
-            Y = float(command[1])
+            Y = command[1][0]
 
             #linha vertical mantém-se o x   
             if new_type.islower():
@@ -79,26 +109,16 @@ def parser(code):
                 y_end = Y
             aux_endpoints = complex(startpoint_new.real,y_end)
 
-
-            new_instruction = instruction(type = new_type,startpoint=startpoint_new,endpoint=aux_endpoints)
-        
-
         if new_type_upper == 'Z':
-            new_instruction = instruction(type = new_type,startpoint=startpoint_new,endpoint=startpoint_path)
             aux_endpoints = startpoint_path
             
 
         if new_type_upper == 'L':
-
-            aux_endpoints = [float(x) for x in command[1].split(",")]
-            aux_endpoints = complex(aux_endpoints[0],aux_endpoints[1])
-
-            new_instruction = instruction(type = new_type,startpoint=startpoint_new,endpoint=aux_endpoints)
-            new_instruction.endpoint=aux_endpoints
+            aux_endpoints = complex(command[1][0],command[1][1])
         
+        new_instruction = instruction(type = new_type,startpoint=startpoint_new,endpoint=aux_endpoints)
         path.append(new_instruction)
         new_instruction.print()
-        #print(aux_endpoints)
         startpoint_new = aux_endpoints
 
 
@@ -108,6 +128,7 @@ def main(code):
     path = parser(code)
     list_points = []
     for instruction in path:
+        
         #instruction.print()
         if instruction.startpoint not in list_points:
             list_points.append(instruction.startpoint)
