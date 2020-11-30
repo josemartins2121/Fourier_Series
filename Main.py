@@ -2,6 +2,7 @@ from dataclasses import dataclass
 import matplotlib.pyplot as plt
 import numpy as np
 import math
+import scipy.integrate as integrate
 
 def replace_char(path,letters):
     result = []
@@ -48,20 +49,29 @@ code = [[instruction[0],instruction.replace(instruction[0],'')]for instruction i
 
 scaling_factor = 1
 
-#transcrição de string para float 
+#transcrição de string para float e alteração do centro de massa 
+print(code)
 for instruction in code:
     try :
         instruction[1]= [float(x) for x in instruction[1].split(",")]
-        if instruction[0].isupper():
+        # absolute value instructions only 
+        if instruction[0] in ['M','L','V']:
             for i,coordinates in enumerate(instruction[1]):
-                instruction[1][i] = coordinates-25
+                #25 por causa das dimensões 50 50 da imsgem teste.svg
+                instruction[1][i]= coordinates -25
+                """ if instruction[0] in ['M','L']:
+                    if i == 0 or i%2==0:
+                        print(instruction[1][i])
+                        #alterar a coordenada
+                        instruction[1][i] = coordinates-25
+                    else :
+                        instruction[1][i]=25-coordinates
+                if instruction[0]=='V':
+                    coordinates = 25 - coordinates """
+        
     except:
         pass
 
-""" for instruction in code:
-    if instruction[0].upper() == 'V':
-        code.pop(code.index(instruction)) """
-#alterar centro de massa da imagem 
 
 
 
@@ -84,7 +94,7 @@ class instruction:
         controlpoint= self.controlpoints))
 
     def function_t(self,t):
-        return self.startpoint*(1-t)+t*self.endpoint
+        return  (self.startpoint*(1-t)+t*self.endpoint).conjugate()
 
 
 def parser(code):
@@ -150,16 +160,16 @@ def main(code):
             list_points.append(instruction.endpoint)         
     #print_points(list_points)
     print_points_f(path)
+    #fourier_coefficients(2,path)
 
 
-def image_func(t):
+def image_func(t,path):
     interval = 2*math.pi/len(path)
     return path[int(t/interval)].function_t((t%interval)/interval)
 
 
 
 def print_points_f(path):
-
     #interval t [0,2pi]
     interval = 2*math.pi/len(path)
 
@@ -174,27 +184,21 @@ def print_points_f(path):
     plt.scatter(X,Y, color='blue',s=2)
     plt.show()
        
-"""  for t in np.arange(0,2*math.pi,0.5):
-        value = path[int(t/interval)].function_t((t%interval)/interval)
-        X.append(value.real)
-        Y.append(value.imag) """
-""" for i in range(len(path)):
-        for t in np.arange(0,1,0.001):
-            print(t)
-            value = path[i].function_t(t)
-            X.append(value.real)
-            Y.append(value.imag)
-    plt.scatter(X,Y, color='blue',s=2)
-    plt.show() """
+import cmath
+import quadpy
 
-def print_points(list_points):
-    X = []
-    Y = []
-    for point in list_points:
-            X.append(point.real)
-            Y.append(point.imag)
-    plt.scatter(X,Y, color='red')
-    plt.show()
+def fourier_coefficients(lenght,path):
+    coefficientes = []
+
+    interval = 2*(math.pi)/len(path)
+    #for t in np.arange(0,2*math.pi,0.1):
+        #print(t)
+       # value = path[int(t/interval)].function_t((t%interval)/interval)
+
+    for i in range(0,len+1):
+        coef = (1/(2*math.pi))*quadpy.quad(lambda x:image_func(x,path)*cmath.exp(complex(0,-1)*i*2*math.pi*x),0,2*math.pi)
+
+
 
 main(code)
 #print_points(code) 
