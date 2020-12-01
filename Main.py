@@ -17,7 +17,7 @@ def replace_char(path,letters):
 
 
 
-with open('teste.svg','r') as f:
+with open('teste copy.svg','r') as f:
     code = f.read()
 
     
@@ -50,37 +50,15 @@ code = [[instruction[0],instruction.replace(instruction[0],'')]for instruction i
 scaling_factor = 1
 
 #transcrição de string para float e alteração do centro de massa 
-print(code)
 for instruction in code:
     try :
-        instruction[1]= [float(x) for x in instruction[1].split(",")]
-        # absolute value instructions only 
-        if instruction[0] in ['M','L','V']:
-            for i,coordinates in enumerate(instruction[1]):
-                #25 por causa das dimensões 50 50 da imsgem teste.svg
-                instruction[1][i]= coordinates -25
-                """ if instruction[0] in ['M','L']:
-                    if i == 0 or i%2==0:
-                        print(instruction[1][i])
-                        #alterar a coordenada
-                        instruction[1][i] = coordinates-25
-                    else :
-                        instruction[1][i]=25-coordinates
-                if instruction[0]=='V':
-                    coordinates = 25 - coordinates """
-        
+        instruction[1]= [float(x) for x in instruction[1].split(",")]  
     except:
         pass
 
-
-
-
-
 print(code)
 
-
-
-class instruction:  
+class instruction():  
     def __init__(self, type,endpoint,startpoint,controlpoints=[]):  
         self.type = type 
         self.startpoint = startpoint 
@@ -92,9 +70,15 @@ class instruction:
         startpoint=self.startpoint,
         endpoint = self.endpoint,
         controlpoint= self.controlpoints))
+    
+    def set_startpoint(self,startpoint):
+        self.startpoint = startpoint 
+    
+    def set_endpoint(self,endpoint):
+        self.endpoint = endpoint
 
     def function_t(self,t):
-        return  (self.startpoint*(1-t)+t*self.endpoint).conjugate()
+        return  (self.startpoint*(1-t)+t*self.endpoint)
 
 
 def parser(code):
@@ -147,12 +131,24 @@ def parser(code):
 
     return path
 
+def change_centre_of_mass(path):
+    for instruction in path:
+        instruction.set_startpoint(complex(instruction.startpoint.real-25,12.5-instruction.startpoint.imag))
+        instruction.set_endpoint(complex(instruction.endpoint.real-25,12.5-instruction.endpoint.imag))
+
+
+
 def main(code):
     path = parser(code)
-    path.pop(8)
+
+    ## alterar o centro de massa e as coordenadas de y 
+    change_centre_of_mass(path)
+
+
+
+    #path.pop(8)
     list_points = []
     for instruction in path:
-        
         #instruction.print()
         if instruction.startpoint not in list_points:
             list_points.append(instruction.startpoint)
