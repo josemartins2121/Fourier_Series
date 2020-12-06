@@ -2,7 +2,7 @@ from dataclasses import dataclass
 import matplotlib.pyplot as plt
 import numpy as np
 import math
-import scipy.integrate as integrate
+import scipy.integrate
 
 def replace_char(path,letters):
     result = []
@@ -138,6 +138,7 @@ def change_centre_of_mass(path):
 
 
 
+
 def main(code):
     path = parser(code)
 
@@ -156,13 +157,35 @@ def main(code):
             list_points.append(instruction.endpoint)         
     #print_points(list_points)
     print_points_f(path)
-    #fourier_coefficients(2,path)
+
+    number_of_coefficients = 8
+    coefficients = fourier_coefficients(number_of_coefficients,path)
+
+
+    list_points = []
+    for t in np.arange(0,2*math.pi,0.1):
+        point = complex(0,0)
+        for i,current_coef in enumerate(coefficients):
+            point = point + current_coef*cmath.exp(complex(0,1))*(i-number_of_coefficients)*t
+        list_points.append(point)
+
+    print_points(list_points)       
 
 
 def image_func(t,path):
     interval = 2*math.pi/len(path)
     return path[int(t/interval)].function_t((t%interval)/interval)
 
+def print_points(list_points):
+    X = []
+    Y = []
+
+    for point in list_points:
+        X.append(point.real)
+        Y.append(point.imag)
+    plt.scatter(X,Y, color='blue',s=2)
+    plt.show()
+       
 
 
 def print_points_f(path):
@@ -183,17 +206,23 @@ def print_points_f(path):
 import cmath
 import quadpy
 
+
+
 def fourier_coefficients(lenght,path):
-    coefficientes = []
+    coefficients = []
 
-    interval = 2*(math.pi)/len(path)
-    #for t in np.arange(0,2*math.pi,0.1):
-        #print(t)
-       # value = path[int(t/interval)].function_t((t%interval)/interval)
+    #for i in np.arange(0,lenght+1,0.1):
+    #    print((image_func(i,path)*cmath.exp(complex(0,-1)*i*2*math.pi*i)).real)
 
-    for i in range(0,len+1):
-        coef = (1/(2*math.pi))*quadpy.quad(lambda x:image_func(x,path)*cmath.exp(complex(0,-1)*i*2*math.pi*x),0,2*math.pi)
 
+    for i in range(-lenght,lenght+1):
+        coef_real = scipy.integrate.quad(lambda x:(image_func(x,path)*cmath.exp(complex(0,-1)*i*x)).real,0,2*math.pi)
+        coef_imag = scipy.integrate.quad(lambda x:(image_func(x,path)*cmath.exp(complex(0,-1)*i*x)).imag,0,2*math.pi)
+        print( coef_real)
+        #print("imag: "+ coef_real)
+        coefficients.append(complex(coef_real[0],coef_imag[0]))
+
+    return coefficients
 
 
 main(code)
